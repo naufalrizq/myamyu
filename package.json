@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "dev:backend": "tsx backend/server.js",
+    "start": "node backend/server.js",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test:marketplace": "node scripts/test-marketplace-connection.js"
