@@ -21,7 +21,7 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-app.listen(port, "127.0.0.1", () => {
-  console.log(`MyaMyu backend listening at http://127.0.0.1:${port}`);
+app.listen(port, () => {
+  console.log(`MyaMyu backend listening at http://0.0.0.0:${port}`);
   startSyncWorker();
 });
