@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": {
+    "javascript": {
+      "command": ["/home/nrizq/.npm-global/bin/typescript-language-server", "--stdio"],
+      "extensions": [".js", ".jsx", ".mjs"]
+    },
+    "json": {
+      "command": ["/home/nrizq/.npm-global/bin/vscode-json-language-server", "--stdio"],
+      "extensions": [".json"]
+    },
+    "css": {
+      "command": ["/home/nrizq/.npm-global/bin/vscode-css-language-server", "--stdio"],
+      "extensions": [".css"]
+    },
+    "html": {
+      "command": ["/home/nrizq/.npm-global/bin/vscode-html-language-server", "--stdio"],
+      "extensions": [".html"]
+    },
+    "markdown": {
+      "command": ["/home/nrizq/.npm-global/bin/vscode-markdown-language-server", "--stdio"],
+      "extensions": [".md"]
+    },
+    "tailwindcss": {
+      "command": ["/home/nrizq/.npm-global/bin/tailwindcss-language-server", "--stdio"],
+      "extensions": [".css", ".jsx", ".js"]
+    },
+    "prisma": {
+      "command": ["/home/nrizq/.npm-global/bin/prisma-language-server", "--stdio"],
+      "extensions": [".prisma"]
+    }
+  },
+  "references": {
+    "docs": {
+      "path": ".",
+      "description": "Project docs: claude.md (progress), DEPLOY.md (deployment guide), CONTEXT.md (domain glossary)"
+    }
+  },
+  "instructions": ["claude.md"]
+}

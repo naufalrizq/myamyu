@@ -1,0 +1,10 @@
+node_modules
+dist
+.vscode
+# Keep environment variables out of version control
+.env
+.env.*
+!.env.example
+
+# Prisma generated client is committed to the repo (platform-independent JS),
+# so it does NOT need to be regenerated at build time on Vercel/Railway.
