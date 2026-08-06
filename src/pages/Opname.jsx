@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Circle, ClipboardCheck, ClipboardList, FileSpreadsheet, FileText, Loader2, Plus, RefreshCw, ShieldCheck } from "lucide-react";
+import { ChevronLeft, Circle, ClipboardCheck, ClipboardList, FileSpreadsheet, FileText, Loader2, Plus, RefreshCw, ShieldCheck, X } from "lucide-react";
 import { Badge, Btn, Card, EmptyState, inputCls } from "../components/ui";
 import { opnameApi } from "../lib/api";
 const getExportExcel = () => import("../lib/export").then((m) => m.exportOpnameToExcel);
@@ -76,6 +76,16 @@ export function Opname({ user }) {
     onError: (e) => alert("Gagal finalisasi: " + e.message),
   });
 
+  const cancelMutation = useMutation({
+    mutationFn: (sessionId) => opnameApi.cancel(sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["opname-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["opname-session", activeId] });
+      setActiveId(null);
+    },
+    onError: (e) => alert("Gagal batalkan sesi: " + e.message),
+  });
+
   const loading = sessionsQ.isLoading && !sessionsQ.data;
   const error = sessionsQ.error;
   const sessions = sessionsQ.data || [];
@@ -107,6 +117,7 @@ export function Opname({ user }) {
         onBack={() => { setActiveId(null); }}
         onUpdateItem={(productId, patch) => updateItemMutation.mutate({ sessionId: activeId, productId, patch })}
         onApprove={() => approveMutation.mutate(activeId)}
+        onCancel={() => cancelMutation.mutate(activeId)}
       />
     );
   }
@@ -149,6 +160,7 @@ export function Opname({ user }) {
 function SessionCard({ session: s, onClick }) {
   const [exporting, setExporting] = useState(false);
   const isDone = s.status === "completed";
+  const isCancelled = s.status === "cancelled";
 
   const handleExportExcel = async (e) => {
     e.stopPropagation();
@@ -182,8 +194,8 @@ function SessionCard({ session: s, onClick }) {
           <div className="font-heading font-extrabold text-slate-800">{s.code}</div>
           <div className="text-xs text-slate-500 mt-0.5">{s.title}</div>
         </div>
-        <Badge tone={isDone ? "ok" : "warn"}>
-          {isDone ? "Selesai" : "Berjalan"}
+        <Badge tone={isDone ? "ok" : isCancelled ? "danger" : "warn"}>
+          {isDone ? "Selesai" : isCancelled ? "Dibatalkan" : "Berjalan"}
         </Badge>
       </div>
       <div className="flex items-center justify-between mt-3 text-xs text-slate-500">
@@ -211,8 +223,10 @@ function SessionCard({ session: s, onClick }) {
   );
 }
 
-function OpnameDetail({ session, onBack, onUpdateItem, onApprove }) {
+function OpnameDetail({ session, onBack, onUpdateItem, onApprove, onCancel }) {
   const isDone = session.status === "completed";
+  const isCancelled = session.status === "cancelled";
+  const isInProgress = !isDone && !isCancelled;
   const countedAll = session.items?.every((i) => i.physicalStock !== null && i.physicalStock !== undefined);
   const [approving, setApproving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -220,6 +234,12 @@ function OpnameDetail({ session, onBack, onUpdateItem, onApprove }) {
   const handleApprove = async () => {
     setApproving(true);
     try { await onApprove(); } finally { setApproving(false); }
+  };
+
+  const handleCancel = () => {
+    if (window.confirm("Batalkan sesi opname ini? Data perhitungan yang sudah diinput akan diabaikan dan tidak memengaruhi stok.")) {
+      onCancel();
+    }
   };
 
   const handleExportExcel = async () => {
@@ -253,8 +273,8 @@ function OpnameDetail({ session, onBack, onUpdateItem, onApprove }) {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge tone={isDone ? "ok" : "warn"}>
-            {isDone ? "Selesai & Disetujui" : "Sedang Berjalan"}
+          <Badge tone={isDone ? "ok" : isCancelled ? "danger" : "warn"}>
+            {isDone ? "Selesai & Disetujui" : isCancelled ? "Dibatalkan" : "Sedang Berjalan"}
           </Badge>
           <Btn tone="ghost" disabled={exporting} onClick={handleExportExcel}
             className="text-xs px-3 py-2 min-h-[36px]">
@@ -322,17 +342,22 @@ function OpnameDetail({ session, onBack, onUpdateItem, onApprove }) {
         })}
       </div>
 
-      {!isDone && (
+      {isInProgress && (
         <div className="sticky bottom-20 md:bottom-4 flex justify-end">
           <Card className="!p-3 w-full sm:w-auto flex flex-col sm:flex-row sm:items-center gap-3 shadow-lg">
             <span className="text-xs font-semibold text-slate-600 hidden sm:inline">
               {countedAll ? "Semua produk sudah dihitung." : "Beberapa produk belum diisi stok fisiknya."}
             </span>
-            <Btn tone="accent" className="w-full sm:w-auto" testId="btn-approve-opname"
-              disabled={approving} onClick={handleApprove}>
-              <ShieldCheck size={16} />
-              {approving ? "Memproses…" : "Selesaikan & Setujui"}
-            </Btn>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Btn tone="ghost" className="w-full sm:w-auto" onClick={handleCancel}>
+                <X size={16} /> Batalkan
+              </Btn>
+              <Btn tone="accent" className="w-full sm:w-auto" testId="btn-approve-opname"
+                disabled={approving} onClick={handleApprove}>
+                <ShieldCheck size={16} />
+                {approving ? "Memproses…" : "Selesaikan & Setujui"}
+              </Btn>
+            </div>
           </Card>
         </div>
       )}
