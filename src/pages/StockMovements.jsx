@@ -128,7 +128,7 @@ export function StockMovements({ user }) {
 }
 
 function MovementModal({ products, onClose, onSave }) {
-  const [productId, setProductId] = useState(products[0]?.id || "");
+  const [productId, setProductId] = useState("");
   const [type, setType] = useState("in");
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
