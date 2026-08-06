@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Boxes, ClipboardCheck, Plus, RefreshCw, Save, TrendingDown, TrendingUp } from "lucide-react";
-import { Btn, Card, EmptyState, Field, inputCls, Modal } from "../components/ui";
+import { Btn, Card, EmptyState, Field, inputCls, Modal, SearchSelect } from "../components/ui";
 import { fmtDate } from "../lib/inventory";
 import { stockMovementsApi, productsApi } from "../lib/api";
 
@@ -144,12 +144,17 @@ function MovementModal({ products, onClose, onSave }) {
     <Modal title="Catat Mutasi Stok" onClose={onClose}>
       <div className="space-y-4">
         <Field label="Produk">
-          <select data-testid="select-movement-product" className={inputCls}
-            value={productId} onChange={(e) => setProductId(e.target.value)}>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>{p.name} (stok: {p.currentStock})</option>
-            ))}
-          </select>
+          <SearchSelect
+            testId="select-movement-product"
+            options={products.map((p) => ({
+              value: String(p.id),
+              label: p.name,
+              meta: `SKU ${p.sku || "-"} · stok ${p.currentStock}`,
+            }))}
+            value={String(productId)}
+            onChange={setProductId}
+            placeholder="Ketik nama atau SKU produk…"
+          />
         </Field>
         <Field label="Jenis Mutasi">
           <div className="grid grid-cols-2 gap-2">

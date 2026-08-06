@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { fmtDateShort } from "../lib/inventory";
 
@@ -99,6 +99,92 @@ export function EmptyState({ icon: Icon, text }) {
     <div className="flex flex-col items-center justify-center text-center py-8 text-slate-400 gap-2">
       <Icon size={28} />
       <p className="text-sm font-medium max-w-[220px]">{text}</p>
+    </div>
+  );
+}
+
+export function SearchSelect({ options = [], value, onChange, getLabel, placeholder = "Ketik untuk mencari…", testId }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const dirtyRef = useRef(false);
+
+  const selected = options.find((o) => String(o.value) === String(value));
+  const labelOf = getLabel || ((o) => o.label || String(o.value));
+  const searchText = (o) => `${labelOf(o)} ${o.meta || ""}`.toLowerCase();
+
+  useEffect(() => {
+    if (dirtyRef.current) return;
+    setQuery(selected ? labelOf(selected) : "");
+  }, [value, options, selected]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const filtered = query.trim()
+    ? options.filter((o) => searchText(o).includes(query.trim().toLowerCase()))
+    : options;
+
+  const handlePick = (o) => {
+    onChange(o.value);
+    setQuery(labelOf(o));
+    dirtyRef.current = false;
+    setOpen(false);
+  };
+
+  const handleInput = (e) => {
+    dirtyRef.current = true;
+    setQuery(e.target.value);
+    setOpen(true);
+    const cur = selected ? labelOf(selected).toLowerCase() : "";
+    if (e.target.value.trim().toLowerCase() !== cur) onChange("");
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape") setOpen(false);
+    if (e.key === "Enter" && open && filtered.length > 0) {
+      e.preventDefault();
+      handlePick(filtered[0]);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <input
+        data-testid={testId}
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        className={inputCls}
+        value={query}
+        placeholder={placeholder}
+        onChange={handleInput}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onKeyDown={handleKeyDown}
+      />
+      {open && (
+        <ul className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+          {filtered.length === 0 && (
+            <li className="px-3.5 py-2.5 text-sm text-slate-400">Tidak ada hasil yang cocok</li>
+          )}
+          {filtered.map((o) => {
+            const isSel = String(o.value) === String(value);
+            return (
+              <li key={String(o.value)}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handlePick(o)}
+                  className={`w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 flex flex-col gap-0.5 ${isSel ? "bg-emerald-50" : ""}`}
+                >
+                  <span className={`font-semibold truncate ${isSel ? "text-emerald-700" : "text-slate-700"}`}>
+                    {labelOf(o)}
+                    {isSel && <span className="ml-1.5 text-emerald-500">✓</span>}
+                  </span>
+                  {o.meta && <span className="text-xs text-slate-400 truncate">{o.meta}</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
